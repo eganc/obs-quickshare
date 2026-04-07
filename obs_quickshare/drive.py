@@ -14,14 +14,13 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 from .detect import DriveInfo
 
 QUICKSHARE_SUBFOLDER = "OBS QuickShare"
 
 
-def _drive_output_dir(drive: DriveInfo) -> Optional[Path]:
+def _drive_output_dir(drive: DriveInfo) -> Path | None:
     """
     Return the destination directory for completed MP4s.
     Creates the OBS QuickShare subfolder inside the Drive folder if needed.
@@ -86,7 +85,7 @@ def _unique_path(path: Path) -> Path:
         counter += 1
 
 
-def _rclone_upload(local_path: Path, remote: Optional[str]) -> None:
+def _rclone_upload(local_path: Path, remote: str | None) -> None:
     """
     Run rclone copy in a subprocess (fire-and-forget).
     Errors are printed to stderr but do not raise — the file is already safe locally.

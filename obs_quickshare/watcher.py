@@ -10,12 +10,11 @@ Safety rules before a file is considered "done":
 
 from __future__ import annotations
 
-import platform
 import sys
 import time
 from pathlib import Path
 from threading import Event, Thread
-from typing import Callable, Optional
+from typing import Callable
 
 import psutil
 
@@ -52,7 +51,7 @@ def _file_is_open(path: Path) -> bool:
     return False
 
 
-def _wait_until_stable(path: Path, stop_event: Optional[Event] = None) -> bool:
+def _wait_until_stable(path: Path, stop_event: Event | None = None) -> bool:
     """
     Block until the file is stable (not growing, not open).
     Returns True when the file is ready, False if stop_event is set before that.
@@ -114,8 +113,8 @@ class _MP4Handler(PatternMatchingEventHandler if _WATCHDOG_AVAILABLE else object
         staging_dir: Path,
         output_dir: Path,
         drive: DriveInfo,
-        on_moved: Optional[Callable[[Path, Path], None]] = None,
-        stop_event: Optional[Event] = None,
+        on_moved: Callable[[Path, Path], None] | None = None,
+        stop_event: Event | None = None,
     ):
         if _WATCHDOG_AVAILABLE:
             super().__init__(patterns=["*.mp4"], ignore_directories=True, case_sensitive=False)
@@ -150,10 +149,10 @@ class _MP4Handler(PatternMatchingEventHandler if _WATCHDOG_AVAILABLE else object
         t.start()
 
     # watchdog event callbacks
-    def on_created(self, event: "FileCreatedEvent") -> None:
+    def on_created(self, event: FileCreatedEvent) -> None:
         self._handle_new_mp4(Path(event.src_path))
 
-    def on_moved(self, event: "FileMovedEvent") -> None:
+    def on_moved(self, event: FileMovedEvent) -> None:
         # OBS remux writes to a temp name then renames — catch the rename
         dest = Path(event.dest_path)
         if dest.suffix.lower() == ".mp4":
@@ -175,7 +174,7 @@ class FileWatcher:
         staging_dir: Path,
         output_dir: Path,
         drive: DriveInfo,
-        on_moved: Optional[Callable[[Path, Path], None]] = None,
+        on_moved: Callable[[Path, Path], None] | None = None,
     ):
         self._staging_dir = staging_dir
         self._output_dir  = output_dir

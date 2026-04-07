@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
-from typing import Optional
 
 from . import __version__
 from .detect import DetectionResult, run_detection
@@ -94,9 +92,11 @@ def cmd_install(args: argparse.Namespace) -> int:
     # --- Interactive confirmation (skipped with --yes) ---
     if not args.yes:
         print("The following will be created:")
-        print(f"  • OBS profile  : QuickShare  ({result.config_root / 'basic' / 'profiles' / 'QuickShare'})")
-        print(f"  • Scene coll.  : QuickShare  ({result.config_root / 'basic' / 'scenes' / 'QuickShare.json'})")
-        print(f"  • Launcher     : OBS QuickShare  (platform shortcut)")
+        profile_path = result.config_root / "basic" / "profiles" / "QuickShare"
+        scenes_path = result.config_root / "basic" / "scenes" / "QuickShare.json"
+        print(f"  • OBS profile  : QuickShare  ({profile_path})")
+        print(f"  • Scene coll.  : QuickShare  ({scenes_path})")
+        print("  • Launcher     : OBS QuickShare  (platform shortcut)")
         print()
         if not _confirm("Proceed with installation?"):
             print("Aborted.")
@@ -116,7 +116,9 @@ def cmd_install(args: argparse.Namespace) -> int:
     # --- Scene collection ---
     already_exists = collection_exists(result.config_root)
     if already_exists and not args.force:
-        print(_yellow("QuickShare scene collection already exists — skipping (use --force to overwrite)."))
+        print(_yellow(
+            "QuickShare scene collection already exists — skipping (use --force to overwrite)."
+        ))
     else:
         try:
             json_path = write_scene_collection(result.config_root, force=args.force)
@@ -146,7 +148,7 @@ def cmd_install(args: argparse.Namespace) -> int:
     print("  1. Open OBS Studio (or double-click the new launcher).")
     print("  2. The launcher will start recording immediately with the QuickShare profile.")
     print("  3. When you stop recording, OBS will remux to MP4 automatically.")
-    print(f"  4. obs-quickshare will move the finished MP4 to:")
+    print("  4. obs-quickshare will move the finished MP4 to:")
     print(f"     {describe_drive_mode(result.drive)}")
     print()
     print(f"  Run '{_bold('obs-quickshare watch')}' to start the file watcher in the background.")
@@ -186,20 +188,19 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         _shutil.rmtree(profile_path)
         print(_green(f"✓ Removed profile: {profile_path}"))
     else:
-        print(f"  Profile not found, skipping.")
+        print("  Profile not found, skipping.")
 
     scenes_path = result.config_root / "basic" / "scenes" / "QuickShare.json"
     if scenes_path.exists():
         scenes_path.unlink()
         print(_green(f"✓ Removed scene collection: {scenes_path}"))
     else:
-        print(f"  Scene collection not found, skipping.")
+        print("  Scene collection not found, skipping.")
 
     # Shortcut removal
-    from .shortcut import (
-        _macos_shortcut_path, _linux_shortcut_path, _windows_shortcut_path
-    )
     import platform as _platform
+
+    from .shortcut import _linux_shortcut_path, _macos_shortcut_path, _windows_shortcut_path
     system = _platform.system()
     if system == "Darwin":
         sc = _macos_shortcut_path()
@@ -214,7 +215,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         sc.unlink()
         print(_green(f"✓ Removed launcher: {sc}"))
     else:
-        print(f"  Launcher not found, skipping.")
+        print("  Launcher not found, skipping.")
 
     print()
     print(_bold("Uninstall complete."))
@@ -267,7 +268,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
         print(_red(f"Error: {e}"))
         return 1
 
-    print(_bold(f"[obs-quickshare] Watcher started"))
+    print(_bold("[obs-quickshare] Watcher started"))
     print(f"  Staging : {result.staging_dir}")
     print(f"  Output  : {describe_drive_mode(result.drive)}")
     print("  Press Ctrl+C to stop.\n")
@@ -327,7 +328,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[list[str]] = None) -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args   = parser.parse_args(argv)
 

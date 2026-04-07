@@ -9,10 +9,8 @@ import glob
 import os
 import platform
 import shutil
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Platform helpers
@@ -28,7 +26,7 @@ def obs_config_root() -> Path:
     elif SYSTEM == "Windows":
         appdata = os.environ.get("APPDATA")
         if not appdata:
-            raise EnvironmentError("APPDATA environment variable not set")
+            raise OSError("APPDATA environment variable not set")
         return Path(appdata) / "obs-studio"
     else:  # Linux / BSD
         xdg = os.environ.get("XDG_CONFIG_HOME")
@@ -37,7 +35,7 @@ def obs_config_root() -> Path:
         return Path.home() / ".config" / "obs-studio"
 
 
-def obs_version(config_root: Path) -> Optional[str]:
+def obs_version(config_root: Path) -> str | None:
     """
     Parse OBS version from global.ini.
     Returns version string like "30.1.2" or None if unreadable.
@@ -64,7 +62,7 @@ def _parse_version(v: str) -> tuple[int, ...]:
 
 # Priority-ordered list of (obs_encoder_id, human_label, platform_filter)
 # platform_filter: None = all platforms, "Darwin" / "Windows" / "Linux" = restricted
-_ENCODER_CANDIDATES: list[tuple[str, str, Optional[str]]] = [
+_ENCODER_CANDIDATES: list[tuple[str, str, str | None]] = [
     ("com.apple.videotoolbox_encoder_h264_hw", "Apple VideoToolbox (H.264 HW)", "Darwin"),
     ("ffmpeg_nvenc",                            "NVIDIA NVENC (H.264)",           None),
     ("ffmpeg_hevc_nvenc",                       "NVIDIA NVENC (HEVC)",            None),
@@ -167,7 +165,7 @@ def default_output_dir() -> Path:
         return Path.home() / "Videos" / "OBS QuickShare"
 
 
-def default_staging_dir(output_dir: Optional[Path] = None) -> Path:
+def default_staging_dir(output_dir: Path | None = None) -> Path:
     """Hidden staging folder where OBS writes MKV/MP4 before we move them."""
     base = output_dir or default_output_dir()
     return base / ".staging"
@@ -180,11 +178,11 @@ def default_staging_dir(output_dir: Optional[Path] = None) -> Path:
 @dataclass
 class DriveInfo:
     mode: str           # "local", "rclone", "none"
-    path: Optional[Path] = None          # local Drive folder root
-    rclone_remote: Optional[str] = None  # rclone remote name
+    path: Path | None = None          # local Drive folder root
+    rclone_remote: str | None = None  # rclone remote name
 
 
-def _find_local_drive_folder_macos() -> Optional[Path]:
+def _find_local_drive_folder_macos() -> Path | None:
     """
     Probe macOS for a Google Drive for Desktop sync folder.
     Returns the 'My Drive' root path or None.
@@ -208,7 +206,7 @@ def _find_local_drive_folder_macos() -> Optional[Path]:
     return None
 
 
-def _find_local_drive_folder_windows() -> Optional[Path]:
+def _find_local_drive_folder_windows() -> Path | None:
     """Probe Windows for a Google Drive for Desktop sync folder."""
     home = Path.home()
     for candidate in [
@@ -224,7 +222,7 @@ def _find_local_drive_folder_windows() -> Optional[Path]:
     return None
 
 
-def _find_local_drive_folder_linux() -> Optional[Path]:
+def _find_local_drive_folder_linux() -> Path | None:
     home = Path.home()
     for candidate in [
         home / "Google Drive",
@@ -235,7 +233,7 @@ def _find_local_drive_folder_linux() -> Optional[Path]:
     return None
 
 
-def detect_drive(rclone_remote: Optional[str] = None) -> DriveInfo:
+def detect_drive(rclone_remote: str | None = None) -> DriveInfo:
     """
     Determine which Drive sync mode to use.
 
@@ -273,7 +271,7 @@ def detect_drive(rclone_remote: Optional[str] = None) -> DriveInfo:
 @dataclass
 class DetectionResult:
     config_root: Path
-    obs_version: Optional[str]
+    obs_version: str | None
     version_ok: bool            # True if OBS >= 28.0
     encoder: EncoderInfo
     output_dir: Path
@@ -282,7 +280,7 @@ class DetectionResult:
     warnings: list[str] = field(default_factory=list)
 
 
-def run_detection(rclone_remote: Optional[str] = None) -> DetectionResult:
+def run_detection(rclone_remote: str | None = None) -> DetectionResult:
     """
     Run all detection checks and return a DetectionResult.
     Raises RuntimeError if OBS config root is missing (OBS never launched).

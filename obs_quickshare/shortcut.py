@@ -8,7 +8,6 @@ Linux:   ~/.local/share/applications/obs-quickshare.desktop
 
 from __future__ import annotations
 
-import os
 import platform
 import stat
 import sys
@@ -217,8 +216,8 @@ def write_shortcut(force: bool = False) -> Path:
     if obs_binary is None:
         # Don't abort — write the shortcut with the default path and warn
         print(
-            f"Warning: OBS binary not found in standard locations. "
-            f"The shortcut will use a default path — edit it if OBS is installed elsewhere.",
+            "Warning: OBS binary not found in standard locations. "
+            "The shortcut will use a default path — edit it if OBS is installed elsewhere.",
             file=sys.stderr,
         )
 

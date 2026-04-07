@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import configparser
 from pathlib import Path
-from typing import Optional
 
 from .detect import DetectionResult
 
