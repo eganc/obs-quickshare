@@ -202,3 +202,15 @@ class TestWriteProfile:
         assert cfg.has_section("General")
         assert cfg.has_section("Video")
         assert cfg.has_section("AdvOut")
+
+    def test_no_spaces_around_equals(self, tmp_path):
+        """OBS requires key=value format (no spaces). Spaces cause silent fallback
+        to Simple output mode, writing to the wrong path with wrong settings."""
+        result = _make_detection_result(tmp_path)
+        result.config_root.mkdir(parents=True)
+        ini_path = write_profile(result)
+        content = ini_path.read_text()
+        # configparser default is "key = value"; OBS needs "key=value"
+        assert " = " not in content, (
+            "basic.ini must not contain ' = ' — OBS requires key=value format"
+        )

@@ -135,6 +135,6 @@ def write_profile(result: DetectionResult, force: bool = False) -> Path:
     ini_path = pdir / "basic.ini"
 
     with open(ini_path, "w", encoding="utf-8") as f:
-        cfg.write(f)
+        cfg.write(f, space_around_delimiters=False)
 
     return ini_path
