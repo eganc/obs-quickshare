@@ -1,22 +1,22 @@
-# OBS QuickShare: The Open-Source Loom Alternative
+# OBS QuickShare: Open-Source Async Screen Recorder
 
-**Stop paying for Loom seats.** OBS QuickShare turns OBS Studio into a one-click async video
-recorder — records safely to MKV, auto-remuxes to MP4, and syncs to your Google Drive instantly.
+OBS QuickShare turns OBS Studio into a one-click async video recorder — records safely to MKV,
+auto-remuxes to MP4, and syncs to your Google Drive instantly.
 No subscriptions. No cloud accounts. No watermarks. Just your recording, in your Drive.
 
 ---
 
 ## Why OBS QuickShare?
 
-| Feature | Loom | OBS QuickShare |
-|---|---|---|
-| Cost | $12.50–$16/user/mo | **Free** |
-| Screen + Webcam | ✓ | ✓ |
-| Google Drive sync | Manual export | **Automatic** |
-| Privacy | Cloud-processed | **Stays on your machine** |
-| Recording limit | 5 min (free) | **Unlimited** |
-| Watermark | Free tier only | **Never** |
-| Open source | ✗ | **✓ MIT License** |
+| Feature | OBS QuickShare |
+|---|---|
+| Cost | **Free** |
+| Screen + Webcam | ✓ |
+| Google Drive sync | **Automatic** |
+| Privacy | **Stays on your machine** |
+| Recording limit | **Unlimited** |
+| Watermark | **Never** |
+| Open source | **✓ MIT License** |
 
 ---
 
@@ -193,7 +193,7 @@ You can customize the layout in OBS after installation without affecting the pro
 Contributions welcome. Please open an issue before submitting a large PR.
 
 ```bash
-git clone https://github.com/yourusername/obs-quickshare
+git clone https://github.com/eganc/obs-quickshare
 cd obs-quickshare
 pip install -e ".[dev]"
 pytest

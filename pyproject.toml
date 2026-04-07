@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "obs-quickshare"
 version = "0.1.0"
-description = "One-click OBS recording workflow — the open-source Loom alternative"
+description = "One-click OBS recording workflow — open-source async screen recorder"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
 keywords = [
-    "obs", "screen-recording", "loom-alternative", "async-video",
-    "google-drive", "obsidian", "screencasting"
+    "obs", "screen-recording", "async-video", "async-screen-recorder",
+    "google-drive", "screencasting", "screen-capture"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",

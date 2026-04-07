@@ -5,7 +5,7 @@ This file is loaded automatically by Claude Code. It provides full context for a
 ## What This Project Is
 
 `obs-quickshare` is a Python CLI tool that configures OBS Studio for a one-click async screen
-recording workflow — a free, open-source alternative to Loom. It installs an OBS profile, scene
+recording workflow — a free, open-source async screen recorder. It installs an OBS profile, scene
 collection, and launcher shortcut, then runs a file watcher that moves finished recordings to
 Google Drive automatically.
 

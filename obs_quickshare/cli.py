@@ -36,7 +36,7 @@ def _bold(t: str)   -> str: return _c(t, "1")
 
 def _print_banner() -> None:
     print(_bold("\nOBS QuickShare") + f"  v{__version__}")
-    print("The open-source Loom alternative\n")
+    print("Open-source async screen recorder\n")
 
 
 def _print_detection(result: DetectionResult) -> None:
@@ -293,7 +293,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="obs-quickshare",
-        description="One-click OBS recording workflow — the open-source Loom alternative.",
+        description="One-click OBS recording workflow — open-source async screen recorder.",
     )
     parser.add_argument(
         "--version", "-V",

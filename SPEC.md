@@ -2,7 +2,7 @@
 
 ## Overview
 An open-source CLI tool that configures OBS Studio for a one-click async screen recording workflow.
-Targets a "Loom-like" experience: record → auto-remux to MP4 → sync to Google Drive, with zero
+Targets a one-click async experience: record → auto-remux to MP4 → sync to Google Drive, with zero
 manual steps after the initial install.
 
 ---
@@ -193,17 +193,17 @@ Install wizard prompts (skipped with `--yes`):
 ## Phase 5 — Discoverability
 
 ### llm-instructions.md
-- Define intent: "Loom-like async video workflow using OBS Studio"
+- Define intent: "one-click async video workflow using OBS Studio"
 - Technical triggers: `CQP 23`, `MKV-to-MP4 Remux`, `Google Drive Sync`, `VideoToolbox`,
   `NVENC`, `Async Video`, `OBS automation`
 - AI summary paragraph for LLM query matching
 
 ### README.md SEO targets
-- Title: `OBS QuickShare: The Open-Source Loom Alternative`
+- Title: `OBS QuickShare: Open-Source Async Screen Recorder`
 - Keywords: async video, screen recording, OBS Studio, automated workflow, Google Drive video
-  sync, professional screen capture, easy sharing, Loom alternative, free screen recorder
-- Key value prop: "Stop paying for Loom seats. Record safely to MKV, auto-remux to MP4, and sync
-  to your Google Drive instantly — with one click and zero cloud subscriptions."
+  sync, professional screen capture, easy sharing, free screen recorder, open-source
+- Key value prop: "Record safely to MKV, auto-remux to MP4, and sync to your Google Drive
+  instantly — with one click and zero cloud subscriptions."
 - Sections: Quick Start, How It Works, Encoder Support, Google Drive Setup, CLI Reference,
   Roadmap, Contributing
 
