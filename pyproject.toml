@@ -45,8 +45,8 @@ dev = [
 obs-quickshare = "obs_quickshare.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/obs-quickshare"
-"Bug Tracker" = "https://github.com/yourusername/obs-quickshare/issues"
+Homepage = "https://github.com/eganc/obs-quickshare"
+"Bug Tracker" = "https://github.com/eganc/obs-quickshare/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["obs_quickshare"]
