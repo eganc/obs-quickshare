@@ -67,7 +67,8 @@ Scenes path:  `[config_root]/basic/scenes/QuickShare.json`
 
 ## Encoder Priority
 
-1. `com.apple.videotoolbox_encoder_h264_hw` (macOS only)
+1. `com.apple.videotoolbox.videoencoder.ave.avc` (macOS only, OBS 30+)
+1a. `com.apple.videotoolbox_encoder_h264_hw` (macOS only, OBS 28–29 fallback)
 2. `ffmpeg_nvenc` (NVIDIA)
 3. `ffmpeg_hevc_nvenc` (NVIDIA HEVC)
 4. `ffmpeg_amd_amf_h264` (AMD)

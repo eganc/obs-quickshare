@@ -106,14 +106,11 @@ _ENCODER_PLUGIN_MAP: dict[str, str] = {
 
 def _plugin_present(encoder_id: str) -> bool:
     """Heuristic: check whether the plugin library for this encoder exists on disk."""
-    fragment = _ENCODER_PLUGIN_MAP.get(encoder_id.split("_")[0] + "_" + encoder_id.split("_")[1]
-                                       if encoder_id.count("_") >= 1 else encoder_id)
-    if fragment is None:
-        # Try matching by first two underscore-segments
-        for key, val in _ENCODER_PLUGIN_MAP.items():
-            if encoder_id.startswith(key):
-                fragment = val
-                break
+    fragment = None
+    for key, val in _ENCODER_PLUGIN_MAP.items():
+        if encoder_id.startswith(key):
+            fragment = val
+            break
     if fragment is None:
         return False
 
