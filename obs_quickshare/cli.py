@@ -133,6 +133,15 @@ def cmd_install(args: argparse.Namespace) -> int:
         try:
             sc_path = write_shortcut(force=args.force)
             print(_green(f"✓ Launcher created: {sc_path}"))
+            print(
+                "  (Tip: ~/Applications is your personal Applications folder. "
+                "In Finder: Go → Home, then open Applications.)"
+            )
+            print(
+                "  (Note: the first launch opens a Terminal window briefly — "
+                "this is expected. Allow mic access if prompted; it is OBS "
+                "requesting it through the shell launcher.)"
+            )
         except FileExistsError as e:
             print(_yellow(f"⚠  {e}"))
 
