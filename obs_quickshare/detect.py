@@ -63,12 +63,15 @@ def _parse_version(v: str) -> tuple[int, ...]:
 # Priority-ordered list of (obs_encoder_id, human_label, platform_filter)
 # platform_filter: None = all platforms, "Darwin" / "Windows" / "Linux" = restricted
 _ENCODER_CANDIDATES: list[tuple[str, str, str | None]] = [
-    ("com.apple.videotoolbox_encoder_h264_hw", "Apple VideoToolbox (H.264 HW)", "Darwin"),
-    ("ffmpeg_nvenc",                            "NVIDIA NVENC (H.264)",           None),
-    ("ffmpeg_hevc_nvenc",                       "NVIDIA NVENC (HEVC)",            None),
-    ("ffmpeg_amd_amf_h264",                     "AMD AMF (H.264)",                None),
-    ("obs_qsv11",                               "Intel QuickSync (H.264)",        None),
-    ("obs_x264",                                "Software x264 (H.264)",          None),
+    # OBS 30+ uses dot-notation IDs; OBS 28–29 used underscore IDs.
+    # List new first so modern installs get the right encoder written to basic.ini.
+    ("com.apple.videotoolbox.videoencoder.ave.avc",  "Apple VideoToolbox (H.264 HW)", "Darwin"),
+    ("com.apple.videotoolbox_encoder_h264_hw",       "Apple VideoToolbox (H.264 HW)", "Darwin"),
+    ("ffmpeg_nvenc",                                  "NVIDIA NVENC (H.264)",          None),
+    ("ffmpeg_hevc_nvenc",                             "NVIDIA NVENC (HEVC)",           None),
+    ("ffmpeg_amd_amf_h264",                           "AMD AMF (H.264)",               None),
+    ("obs_qsv11",                                     "Intel QuickSync (H.264)",       None),
+    ("obs_x264",                                      "Software x264 (H.264)",         None),
 ]
 
 # OBS writes encoder capability info under plugin_config on some versions,

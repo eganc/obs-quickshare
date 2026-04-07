@@ -117,7 +117,19 @@ class TestDetectEncoder:
         assert encoder.obs_id == "obs_x264"
         assert encoder.is_hardware is False
 
-    def test_apple_videotoolbox_darwin(self):
+    def test_apple_videotoolbox_darwin_new_id(self):
+        """OBS 30+ uses dot-notation encoder IDs."""
+        def fake_plugin(enc_id):
+            return enc_id == "com.apple.videotoolbox.videoencoder.ave.avc"
+
+        with patch("obs_quickshare.detect.SYSTEM", "Darwin"), \
+             patch("obs_quickshare.detect._plugin_present", side_effect=fake_plugin):
+            encoder = detect_encoder()
+        assert encoder.obs_id == "com.apple.videotoolbox.videoencoder.ave.avc"
+        assert encoder.is_hardware is True
+
+    def test_apple_videotoolbox_darwin_legacy_id(self):
+        """OBS 28–29 used underscore-based encoder IDs; new ID checked first."""
         def fake_plugin(enc_id):
             return enc_id == "com.apple.videotoolbox_encoder_h264_hw"
 
