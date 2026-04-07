@@ -102,6 +102,22 @@ class TestMacosShortcut:
         assert COLLECTION_NAME in content
         assert "--startrecording" in content
 
+    def test_minimize_to_tray_not_in_flags(self, tmp_path):
+        """--minimize-to-tray prevents the AutoRemux dialog from rendering,
+        so OBS's RemuxAfterRecord silently aborts and no MP4 is produced."""
+        home = self._make_home(tmp_path)
+        obs_bin = tmp_path / "OBS"
+        obs_bin.write_bytes(b"")
+
+        with patch("obs_quickshare.shortcut.platform.system", return_value="Darwin"), \
+             patch("obs_quickshare.shortcut.Path.home", return_value=home), \
+             patch("obs_quickshare.shortcut.find_obs_binary", return_value=obs_bin):
+            dest = write_shortcut()
+
+        assert "--minimize-to-tray" not in dest.read_text(), (
+            "--minimize-to-tray breaks RemuxAfterRecord; it must not be in the launcher"
+        )
+
     def test_command_file_uses_open_w_for_tcc(self, tmp_path):
         """macOS shortcut must use `open -W -a OBS` so that:
         - Launch Services correctly attributes TCC permissions to OBS.app

@@ -39,7 +39,12 @@ _OBS_BINARY: dict[str, list[Path]] = {
 OBS_FLAGS = [
     "--profile", PROFILE_NAME,
     "--collection", COLLECTION_NAME,
-    "--minimize-to-tray",
+    # "--minimize-to-tray" intentionally omitted:
+    # When OBS is hidden to the system tray, its AutoRemux dialog cannot
+    # render (it is a child of the hidden main window), so RemuxAfterRecord
+    # silently aborts and no MP4 is produced.  Keeping OBS visible also lets
+    # users see the recording state and the remux progress bar.
+    # A proper tray/menu-bar app is tracked in GitHub Issue #1 (.app bundle).
     "--startrecording",
 ]
 
