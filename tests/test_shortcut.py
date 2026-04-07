@@ -102,9 +102,11 @@ class TestMacosShortcut:
         assert COLLECTION_NAME in content
         assert "--startrecording" in content
 
-    def test_command_file_contains_obs_binary_path(self, tmp_path):
+    def test_command_file_uses_open_for_tcc(self, tmp_path):
+        """macOS shortcut must use `open -a OBS` so Launch Services correctly
+        attributes screen-recording / mic / camera TCC permissions to OBS.app."""
         home = self._make_home(tmp_path)
-        obs_bin = tmp_path / "MyOBS"
+        obs_bin = tmp_path / "OBS"
         obs_bin.write_bytes(b"")
 
         with patch("obs_quickshare.shortcut.platform.system", return_value="Darwin"), \
@@ -113,7 +115,9 @@ class TestMacosShortcut:
             dest = write_shortcut()
 
         content = dest.read_text()
-        assert str(obs_bin) in content
+        assert "open -a OBS" in content, (
+            "macOS launcher must use 'open -a OBS' to preserve TCC permissions"
+        )
 
     def test_raises_file_exists_without_force(self, tmp_path):
         home = self._make_home(tmp_path)
