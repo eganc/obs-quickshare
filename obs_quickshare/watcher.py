@@ -140,6 +140,16 @@ class _MP4Handler(PatternMatchingEventHandler if _WATCHDOG_AVAILABLE else object
                 print(f"[watcher] Moved: {src_path.name} → {dest}", flush=True)
                 if self._on_moved:
                     self._on_moved(src_path, dest)
+            except FileNotFoundError:
+                # File was already moved by a concurrent worker.  watchdog can
+                # fire both on_created and on_moved for the same write (e.g.
+                # fragmented_mp4 final rename), so a second worker may arrive
+                # after the first has already completed the move.  Harmless.
+                print(
+                    f"[watcher] {src_path.name} already moved (duplicate event, "
+                    "ignoring).",
+                    flush=True,
+                )
             except Exception as e:
                 print(f"[watcher] Error processing {src_path.name}: {e}", file=sys.stderr)
             finally:
