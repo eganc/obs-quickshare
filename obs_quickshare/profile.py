@@ -67,7 +67,13 @@ def build_basic_ini(result: DetectionResult) -> configparser.RawConfigParser:
     cfg.add_section("AdvOut")
     cfg.set("AdvOut", "RecType",    "Standard")
     cfg.set("AdvOut", "RecTracks",  "1")
-    cfg.set("AdvOut", "RecFormat",  "mkv")   # MKV = crash-safe; OBS remuxes to MP4 on stop
+    # fragmented_mp4: crash-safe container that is already MP4 — no remux step
+    # needed.  OBS writes the file incrementally (one fragment per GOP) so a
+    # partial recording is always a valid MP4.  RecFormat is the OBS 28/29 key;
+    # RecFormat2 is the OBS 30+ authoritative key.  We set both for compat.
+    # Using "mp4" as the OBS 28/29 fallback (not crash-safe but functional).
+    cfg.set("AdvOut", "RecFormat",  "mp4")
+    cfg.set("AdvOut", "RecFormat2", "fragmented_mp4")
     cfg.set("AdvOut", "RecEncoder", result.encoder.obs_id)
     cfg.set("AdvOut", "RecFilePath", str(result.staging_dir))
     cfg.set("AdvOut", "RecFileNameWithoutSpace", "true")
@@ -80,10 +86,6 @@ def build_basic_ini(result: DetectionResult) -> configparser.RawConfigParser:
     cfg.set("AdvOut", "RecAudioEncoder", "ffmpeg_aac")
     cfg.set("AdvOut", "RecAudioBitrate", "160")
 
-    # Auto-remux: OBS will automatically remux MKV → MP4 when recording stops
-    cfg.set("AdvOut", "RemuxAfterRecord",    "true")
-    cfg.set("AdvOut", "RemuxAfterRecordPath", str(result.staging_dir))
-
     # Filename template: YYYY-MM-DD_HH-MM-SS
     cfg.set("AdvOut", "RecFilename", "%CCYY-%MM-%DD_%hh-%mm-%ss")
 
@@ -91,19 +93,14 @@ def build_basic_ini(result: DetectionResult) -> configparser.RawConfigParser:
     cfg.set("AdvOut", "Encoder",    result.encoder.obs_id)
     cfg.set("AdvOut", "ApplyServiceSettings", "true")
 
-    # OBS 30+ uses RecFormat2 as the authoritative format key.  Without it,
-    # RemuxAfterRecord is silently skipped on OBS 30+.  Both keys are written
-    # for backward-compat with OBS 28/29.
-    cfg.set("AdvOut", "RecFormat2", "mkv")
-
     # -----------------------------------------------------------------------
     # [SimpleOutput]  — kept minimal; user may switch to Simple mode
     # -----------------------------------------------------------------------
     cfg.add_section("SimpleOutput")
     cfg.set("SimpleOutput", "RecQuality",  "Small")
     cfg.set("SimpleOutput", "RecEncoder",  result.encoder.obs_id)
-    cfg.set("SimpleOutput", "RecFormat",   "mkv")
-    cfg.set("SimpleOutput", "RecFormat2",  "mkv")   # OBS 30+ authoritative key
+    cfg.set("SimpleOutput", "RecFormat",   "mp4")
+    cfg.set("SimpleOutput", "RecFormat2",  "fragmented_mp4")
     cfg.set("SimpleOutput", "FilePath",    str(result.staging_dir))
     cfg.set("SimpleOutput", "RecRB",       "false")  # no replay buffer
 

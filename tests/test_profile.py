@@ -135,19 +135,18 @@ class TestBuildBasicIni:
         cfg = build_basic_ini(self.result)
         assert cfg.get("AdvOut", "RecFilePath") == str(self.result.staging_dir)
 
-    def test_auto_remux_enabled(self):
+    def test_fragmented_mp4_format(self):
+        """fragmented_mp4 records directly to a crash-safe MP4 with no remux step."""
         cfg = build_basic_ini(self.result)
-        assert cfg.get("AdvOut", "RemuxAfterRecord") == "true"
+        assert cfg.get("AdvOut", "RecFormat2") == "fragmented_mp4"
+        assert cfg.get("SimpleOutput", "RecFormat2") == "fragmented_mp4"
 
-    def test_mkv_format(self):
+    def test_no_remux_after_record(self):
+        """RemuxAfterRecord must not be set — fragmented_mp4 needs no remux."""
         cfg = build_basic_ini(self.result)
-        assert cfg.get("AdvOut", "RecFormat") == "mkv"
-
-    def test_rec_format2_present(self):
-        """OBS 30+ requires RecFormat2 for RemuxAfterRecord to fire."""
-        cfg = build_basic_ini(self.result)
-        assert cfg.get("AdvOut", "RecFormat2") == "mkv"
-        assert cfg.get("SimpleOutput", "RecFormat2") == "mkv"
+        assert not cfg.has_option("AdvOut", "RemuxAfterRecord"), (
+            "RemuxAfterRecord must be absent; fragmented_mp4 is already MP4"
+        )
 
     def test_preserves_key_case(self):
         """OBS is case-sensitive; keys must NOT be lowercased."""
