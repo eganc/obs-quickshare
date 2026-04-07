@@ -29,13 +29,27 @@ def _make_uuid() -> str:
 
 
 def _display_capture_source(system: str) -> dict:
-    """Return an OBS display capture source dict appropriate for the platform."""
+    """Return an OBS display capture source dict appropriate for the platform.
+
+    macOS source IDs by OBS version:
+      OBS 30+ (macOS 12.3+): "screen_capture"  — ScreenCaptureKit-based.
+                              Supports hide_obs to exclude OBS from the capture.
+      OBS 28–29:             "display_capture"  — legacy CoreGraphics API.
+
+    We write "screen_capture" (OBS 30+) with hide_obs=True so OBS does not
+    appear in its own recording even when its window is visible on screen.
+    This is cleaner than relying on --minimize-to-tray to keep OBS hidden.
+    """
     if system == "Darwin":
-        source_id = "display_capture"
+        # screen_capture (OBS 30+, ScreenCaptureKit)
+        # method 0 = Display Capture (whole screen)
+        # hide_obs  = exclude OBS windows from the capture
+        source_id = "screen_capture"
         settings = {
-            "display_uuid": "",   # empty = default display
+            "method": 0,
+            "display_uuid": "",   # empty = main/default display
             "show_cursor": True,
-            "crop_mode": 0,
+            "hide_obs": True,
         }
     elif system == "Windows":
         source_id = "monitor_capture"

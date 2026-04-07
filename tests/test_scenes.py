@@ -27,11 +27,19 @@ from obs_quickshare.scenes import (
 # ---------------------------------------------------------------------------
 
 class TestDisplayCaptureSource:
-    def test_darwin_uses_display_capture(self):
+    def test_darwin_uses_screen_capture(self):
+        """OBS 30+ on macOS uses screen_capture (ScreenCaptureKit), not display_capture."""
         src = _display_capture_source("Darwin")
-        assert src["id"] == "display_capture"
+        assert src["id"] == "screen_capture"
         assert src["name"] == "Screen"
         assert isinstance(src["uuid"], str) and len(src["uuid"]) > 0
+
+    def test_darwin_hide_obs_enabled(self):
+        """hide_obs=True prevents OBS from appearing in its own recording."""
+        src = _display_capture_source("Darwin")
+        assert src["settings"].get("hide_obs") is True, (
+            "hide_obs must be True so OBS does not record itself"
+        )
 
     def test_windows_uses_monitor_capture(self):
         src = _display_capture_source("Windows")
