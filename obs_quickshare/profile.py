@@ -91,6 +91,11 @@ def build_basic_ini(result: DetectionResult) -> configparser.RawConfigParser:
     cfg.set("AdvOut", "Encoder",    result.encoder.obs_id)
     cfg.set("AdvOut", "ApplyServiceSettings", "true")
 
+    # OBS 30+ uses RecFormat2 as the authoritative format key.  Without it,
+    # RemuxAfterRecord is silently skipped on OBS 30+.  Both keys are written
+    # for backward-compat with OBS 28/29.
+    cfg.set("AdvOut", "RecFormat2", "mkv")
+
     # -----------------------------------------------------------------------
     # [SimpleOutput]  — kept minimal; user may switch to Simple mode
     # -----------------------------------------------------------------------
@@ -98,6 +103,7 @@ def build_basic_ini(result: DetectionResult) -> configparser.RawConfigParser:
     cfg.set("SimpleOutput", "RecQuality",  "Small")
     cfg.set("SimpleOutput", "RecEncoder",  result.encoder.obs_id)
     cfg.set("SimpleOutput", "RecFormat",   "mkv")
+    cfg.set("SimpleOutput", "RecFormat2",  "mkv")   # OBS 30+ authoritative key
     cfg.set("SimpleOutput", "FilePath",    str(result.staging_dir))
     cfg.set("SimpleOutput", "RecRB",       "false")  # no replay buffer
 

@@ -143,6 +143,12 @@ class TestBuildBasicIni:
         cfg = build_basic_ini(self.result)
         assert cfg.get("AdvOut", "RecFormat") == "mkv"
 
+    def test_rec_format2_present(self):
+        """OBS 30+ requires RecFormat2 for RemuxAfterRecord to fire."""
+        cfg = build_basic_ini(self.result)
+        assert cfg.get("AdvOut", "RecFormat2") == "mkv"
+        assert cfg.get("SimpleOutput", "RecFormat2") == "mkv"
+
     def test_preserves_key_case(self):
         """OBS is case-sensitive; keys must NOT be lowercased."""
         cfg = build_basic_ini(self.result)

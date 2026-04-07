@@ -102,9 +102,10 @@ class TestMacosShortcut:
         assert COLLECTION_NAME in content
         assert "--startrecording" in content
 
-    def test_command_file_uses_open_for_tcc(self, tmp_path):
-        """macOS shortcut must use `open -a OBS` so Launch Services correctly
-        attributes screen-recording / mic / camera TCC permissions to OBS.app."""
+    def test_command_file_uses_open_w_for_tcc(self, tmp_path):
+        """macOS shortcut must use `open -W -a OBS` so that:
+        - Launch Services correctly attributes TCC permissions to OBS.app
+        - Terminal stays alive until OBS quits (watcher output visible)"""
         home = self._make_home(tmp_path)
         obs_bin = tmp_path / "OBS"
         obs_bin.write_bytes(b"")
@@ -115,9 +116,28 @@ class TestMacosShortcut:
             dest = write_shortcut()
 
         content = dest.read_text()
-        assert "open -a OBS" in content, (
-            "macOS launcher must use 'open -a OBS' to preserve TCC permissions"
+        assert "open -W -a OBS" in content, (
+            "macOS launcher must use 'open -W -a OBS' to keep terminal alive "
+            "and preserve TCC permissions"
         )
+
+    def test_command_file_starts_watcher(self, tmp_path):
+        """Launcher must start obs-quickshare watch so files are moved after recording."""
+        home = self._make_home(tmp_path)
+        obs_bin = tmp_path / "OBS"
+        obs_bin.write_bytes(b"")
+        fake_qs = tmp_path / "obs-quickshare"
+        fake_qs.write_bytes(b"")
+
+        with patch("obs_quickshare.shortcut.platform.system", return_value="Darwin"), \
+             patch("obs_quickshare.shortcut.Path.home", return_value=home), \
+             patch("obs_quickshare.shortcut.find_obs_binary", return_value=obs_bin), \
+             patch("obs_quickshare.shortcut._find_obs_quickshare_bin",
+                   return_value=fake_qs):
+            dest = write_shortcut()
+
+        content = dest.read_text()
+        assert "watch" in content, "Launcher must start 'obs-quickshare watch'"
 
     def test_raises_file_exists_without_force(self, tmp_path):
         home = self._make_home(tmp_path)
