@@ -4,6 +4,9 @@ OBS QuickShare turns OBS Studio into a one-click async video recorder — record
 auto-remuxes to MP4, and syncs to your Google Drive instantly.
 No subscriptions. No cloud accounts. No watermarks. Just your recording, in your Drive.
 
+If you use a subscription-based screen recorder (like Loom) and want the same workflow
+running locally — fully private, unlimited, and free — this tool is for you.
+
 ---
 
 ## Why OBS QuickShare?

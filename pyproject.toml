@@ -11,7 +11,7 @@ license = { text = "MIT" }
 requires-python = ">=3.9"
 keywords = [
     "obs", "screen-recording", "async-video", "async-screen-recorder",
-    "google-drive", "screencasting", "screen-capture"
+    "google-drive", "screencasting", "screen-capture", "loom-alternative"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
