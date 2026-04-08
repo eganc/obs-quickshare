@@ -13,8 +13,28 @@ from __future__ import annotations
 import sys
 import time
 from pathlib import Path
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 from typing import Callable
+
+_PRINT_LOCK = Lock()  # serialise multi-file progress lines
+
+
+def _fmt_size(n: int) -> str:
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 ** 2:
+        return f"{n / 1024:.1f} KB"
+    if n < 1024 ** 3:
+        return f"{n / 1024 ** 2:.1f} MB"
+    return f"{n / 1024 ** 3:.2f} GB"
+
+
+def _status(label: str, msg: str, end: str = "\n") -> None:
+    """Thread-safe status print. Use end='\r' for in-place updates."""
+    with _PRINT_LOCK:
+        line = f"[quickshare] {label}: {msg}"
+        # Pad to 80 chars so \r overwrites the previous line cleanly
+        print(f"{line:<80}", end=end, flush=True)
 
 try:
     import psutil
@@ -31,6 +51,7 @@ except ImportError:
 
 from .detect import DriveInfo
 from .drive import move_to_drive
+from .share import copy_to_clipboard, get_share_link
 
 # Tuning parameters
 _POLL_INTERVAL_S   = 2      # seconds between size checks
@@ -62,10 +83,15 @@ def _file_is_open(path: Path) -> bool:
     return False
 
 
-def _wait_until_stable(path: Path, stop_event: Event | None = None) -> bool:
+def _wait_until_stable(
+    path: Path,
+    stop_event: Event | None = None,
+    status_cb: Callable[[str], None] | None = None,
+) -> bool:
     """
     Block until the file is stable (not growing, not open).
     Returns True when the file is ready, False if stop_event is set before that.
+    Calls status_cb(message) on each poll cycle so the caller can show progress.
     """
     stable_count = 0
     last_size    = -1
@@ -75,7 +101,6 @@ def _wait_until_stable(path: Path, stop_event: Event | None = None) -> bool:
             return False
 
         if not path.exists():
-            # File disappeared — probably already moved by OBS or another process
             return False
 
         try:
@@ -88,10 +113,14 @@ def _wait_until_stable(path: Path, stop_event: Event | None = None) -> bool:
         if size < _MIN_SIZE_BYTES:
             stable_count = 0
             last_size = size
+            if status_cb:
+                status_cb(f"{_fmt_size(size)}  (waiting for data …)")
             time.sleep(_POLL_INTERVAL_S)
             continue
 
         if age_s < _MIN_AGE_S:
+            if status_cb:
+                status_cb(f"{_fmt_size(size)}  (age {age_s:.0f}s < {_MIN_AGE_S}s)")
             time.sleep(_POLL_INTERVAL_S)
             continue
 
@@ -102,12 +131,16 @@ def _wait_until_stable(path: Path, stop_event: Event | None = None) -> bool:
 
         last_size = size
 
+        if status_cb:
+            bar = "█" * stable_count + "░" * (_STABLE_CHECKS - stable_count)
+            open_flag = "  file open" if _file_is_open(path) else ""
+            status_cb(f"{_fmt_size(size)}  [{bar}] {stable_count}/{_STABLE_CHECKS}{open_flag}")
+
         if stable_count >= _STABLE_CHECKS:
-            # Final check: ensure nothing has the file open
             if not _file_is_open(path):
                 return True
             else:
-                stable_count = 0  # reset and keep waiting
+                stable_count = 0
 
         time.sleep(_POLL_INTERVAL_S)
 
@@ -143,26 +176,50 @@ class _MP4Handler(PatternMatchingEventHandler if _WATCHDOG_AVAILABLE else object
         self._in_flight.add(src_path)
 
         def worker():
+            name = src_path.name
             try:
-                ready = _wait_until_stable(src_path, stop_event=self._stop_event)
+                _status(name, "detected — waiting to stabilise …")
+
+                def on_progress(msg: str) -> None:
+                    _status(name, msg, end="\r")
+
+                ready = _wait_until_stable(
+                    src_path,
+                    stop_event=self._stop_event,
+                    status_cb=on_progress,
+                )
+                # End the in-place progress line
+                print(flush=True)
+
                 if not ready:
                     return
+
+                _status(name, "stable — moving to output …")
                 dest = move_to_drive(src_path, self._drive, self._output_dir)
-                print(f"[watcher] Moved: {src_path.name} → {dest}", flush=True)
+                _status(name, f"saved → {dest}")
+
                 if self._on_moved:
                     self._on_moved(src_path, dest)
+
+                # Retrieve share link (blocks for Drive sync or rclone upload)
+                def on_share_status(msg: str) -> None:
+                    _status(name, msg, end="\r")
+
+                link = get_share_link(dest, self._drive, status_cb=on_share_status)
+                print(flush=True)  # end any \r line
+
+                if link:
+                    _status(name, f"share link → {link}")
+                    if copy_to_clipboard(link):
+                        _status(name, "link copied to clipboard ✓")
+                else:
+                    _status(name, "no share link available")
+
             except FileNotFoundError:
-                # File was already moved by a concurrent worker.  watchdog can
-                # fire both on_created and on_moved for the same write (e.g.
-                # fragmented_mp4 final rename), so a second worker may arrive
-                # after the first has already completed the move.  Harmless.
-                print(
-                    f"[watcher] {src_path.name} already moved (duplicate event, "
-                    "ignoring).",
-                    flush=True,
-                )
+                # Duplicate watchdog event — first worker already moved the file.
+                _status(name, "already moved (duplicate event, skipping)")
             except Exception as e:
-                print(f"[watcher] Error processing {src_path.name}: {e}", file=sys.stderr)
+                print(f"[quickshare] Error processing {name}: {e}", file=sys.stderr)
             finally:
                 self._in_flight.discard(src_path)
 

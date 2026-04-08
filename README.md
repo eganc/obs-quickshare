@@ -115,7 +115,7 @@ Files are placed in a `OBS QuickShare/` subfolder inside your Drive.
 **The watcher never moves a file until it is fully written** — it waits for the file size to
 be stable for at least 6 seconds and confirms no process has the file open.
 
-### Mode B — rclone
+### Mode B — rclone (with automatic share links)
 For headless machines or users without the Drive desktop app:
 
 ```bash
@@ -125,6 +125,13 @@ rclone config
 # Then install with:
 obs-quickshare install --rclone-remote gdrive
 ```
+
+When you stop recording, OBS QuickShare will:
+1. Upload the file to your rclone remote (synchronously)
+2. Generate a shareable link via `rclone link`
+3. Copy the link to your clipboard
+
+This is the recommended way to get instant shareable links for your recordings.
 
 ### Mode C — Local only
 If neither Drive nor rclone is available, recordings stay in `~/Movies/OBS QuickShare/`
@@ -185,7 +192,6 @@ You can customize the layout in OBS after installation without affecting the pro
 
 - [ ] Login Item / startup service (auto-start watcher on login)
 - [ ] Configurable resolution / FPS presets
-- [ ] Post-upload shareable link copy to clipboard (via Drive API, optional)
 - [ ] Homebrew formula
 - [ ] Windows MSI installer
 

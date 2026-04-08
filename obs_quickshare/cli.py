@@ -60,6 +60,31 @@ def _print_detection(result: DetectionResult) -> None:
     print()
 
 
+def _parse_capture_mode(value: str) -> tuple[str, str]:
+    """Parse --capture-mode value into (mode, target).
+
+    Accepted forms:
+      display           → ("display", "")
+      window            → ("window", "")
+      app:<bundle-id>   → ("app", "<bundle-id>")
+    """
+    if value == "display":
+        return ("display", "")
+    if value == "window":
+        return ("window", "")
+    if value.startswith("app:"):
+        target = value[4:].strip()
+        if not target:
+            raise ValueError(
+                "--capture-mode app: requires a bundle ID, e.g. app:com.google.Chrome"
+            )
+        return ("app", target)
+    raise ValueError(
+        f"Unknown --capture-mode '{value}'. "
+        "Use: display | window | app:<bundle-id>"
+    )
+
+
 def _confirm(prompt: str, default: bool = True) -> bool:
     suffix = " [Y/n] " if default else " [y/N] "
     try:
@@ -114,6 +139,11 @@ def cmd_install(args: argparse.Namespace) -> int:
             print(_yellow(f"⚠  {e}"))
 
     # --- Scene collection ---
+    try:
+        capture_mode, capture_target = _parse_capture_mode(args.capture_mode)
+    except ValueError as e:
+        print(_red(f"Error: {e}"))
+        return 1
     already_exists = collection_exists(result.config_root)
     if already_exists and not args.force:
         print(_yellow(
@@ -121,7 +151,11 @@ def cmd_install(args: argparse.Namespace) -> int:
         ))
     else:
         try:
-            json_path = write_scene_collection(result.config_root, force=args.force)
+            json_path = write_scene_collection(
+                result.config_root, force=args.force,
+                capture_mode=capture_mode, capture_target=capture_target,
+                include_webcam=args.webcam, include_mic=args.mic,
+            )
             print(_green(f"✓ Scene collection written: {json_path}"))
         except FileExistsError as e:
             print(_yellow(f"⚠  {e}"))
@@ -162,6 +196,38 @@ def cmd_install(args: argparse.Namespace) -> int:
     print()
     print(f"  Run '{_bold('obs-quickshare watch')}' to start the file watcher in the background.")
     print()
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# set-capture
+# ---------------------------------------------------------------------------
+
+def cmd_set_capture(args: argparse.Namespace) -> int:
+    """Rewrite only the scene collection — no profile/shortcut changes."""
+    try:
+        result = run_detection(rclone_remote=None)
+    except RuntimeError as e:
+        print(_red(f"Error: {e}"))
+        return 1
+
+    if not collection_exists(result.config_root):
+        print(_red("QuickShare scene collection not found. Run 'obs-quickshare install' first."))
+        return 1
+
+    try:
+        capture_mode, capture_target = _parse_capture_mode(args.capture_mode)
+    except ValueError as e:
+        print(_red(f"Error: {e}"))
+        return 1
+
+    json_path = write_scene_collection(
+        result.config_root, force=True,
+        capture_mode=capture_mode, capture_target=capture_target,
+        include_webcam=args.webcam, include_mic=args.mic,
+    )
+    print(_green(f"✓ Scene collection updated: {json_path}"))
+    print("  Restart OBS (or switch scene collections and back) to apply.")
     return 0
 
 
@@ -320,6 +386,30 @@ def build_parser() -> argparse.ArgumentParser:
                            help="Overwrite existing profile / scene collection / shortcut")
     p_install.add_argument("--rclone-remote", metavar="NAME",
                            help="rclone remote name to use for Drive sync (Mode B)")
+    p_install.add_argument(
+        "--capture-mode", metavar="MODE", default="display",
+        help=(
+            "What to capture: 'display' (full screen, default), 'window' (OBS window picker), "
+            "or 'app:<bundle-id>' (all windows of one app, e.g. app:com.google.Chrome). "
+            "macOS only; ignored on Windows/Linux."
+        ),
+    )
+    p_install.add_argument("--webcam", action="store_true",
+                           help="Add a webcam PiP source (bottom-right corner)")
+    p_install.add_argument("--mic", action="store_true",
+                           help="Add a microphone audio source (system default device)")
+
+    # set-capture
+    p_set = sub.add_parser("set-capture",
+                            help="Change capture mode / webcam / mic without reinstalling")
+    p_set.add_argument(
+        "capture_mode", metavar="MODE", nargs="?", default="display",
+        help="display | window | app:<bundle-id>  (default: display)",
+    )
+    p_set.add_argument("--webcam", action="store_true",
+                       help="Include webcam PiP source")
+    p_set.add_argument("--mic", action="store_true",
+                       help="Include microphone audio source")
 
     # uninstall
     p_uninstall = sub.add_parser("uninstall", help="Remove QuickShare config and launcher")
@@ -342,10 +432,11 @@ def main(argv: list[str] | None = None) -> None:
     args   = parser.parse_args(argv)
 
     dispatch = {
-        "install":   cmd_install,
-        "uninstall": cmd_uninstall,
-        "status":    cmd_status,
-        "watch":     cmd_watch,
+        "install":     cmd_install,
+        "set-capture": cmd_set_capture,
+        "uninstall":   cmd_uninstall,
+        "status":      cmd_status,
+        "watch":       cmd_watch,
     }
 
     if args.command is None:

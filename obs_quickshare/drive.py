@@ -87,8 +87,9 @@ def _unique_path(path: Path) -> Path:
 
 def _rclone_upload(local_path: Path, remote: str | None) -> None:
     """
-    Run rclone copy in a subprocess (fire-and-forget).
+    Run rclone copyto synchronously.
     Errors are printed to stderr but do not raise — the file is already safe locally.
+    Blocks until the upload completes so callers can follow up with rclone link.
     """
     if not remote:
         print("Warning: rclone mode selected but no remote name configured.", file=sys.stderr)
@@ -101,16 +102,15 @@ def _rclone_upload(local_path: Path, remote: str | None) -> None:
         "rclone", "copyto",
         str(local_path),
         f"{remote}:{QUICKSHARE_SUBFOLDER}/{local_path.name}",
-        "--progress",
     ]
     try:
-        # Detach: we don't wait for completion — the file is already safely on disk
-        subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            close_fds=True,
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(
+                f"Warning: rclone upload failed (exit {result.returncode}): "
+                f"{result.stderr.strip()}",
+                file=sys.stderr,
+            )
     except OSError as e:
         print(f"Warning: failed to launch rclone: {e}", file=sys.stderr)
 
