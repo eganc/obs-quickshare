@@ -98,9 +98,9 @@ def _rclone_upload(local_path: Path, remote: str | None) -> None:
         return
 
     cmd = [
-        "rclone", "copy",
+        "rclone", "copyto",
         str(local_path),
-        f"{remote}:{QUICKSHARE_SUBFOLDER}/",
+        f"{remote}:{QUICKSHARE_SUBFOLDER}/{local_path.name}",
         "--progress",
     ]
     try:

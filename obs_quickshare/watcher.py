@@ -16,7 +16,11 @@ from pathlib import Path
 from threading import Event, Thread
 from typing import Callable
 
-import psutil
+try:
+    import psutil
+    _PSUTIL_AVAILABLE = True
+except ImportError:
+    _PSUTIL_AVAILABLE = False
 
 try:
     from watchdog.events import FileCreatedEvent, FileMovedEvent, PatternMatchingEventHandler
@@ -36,7 +40,14 @@ _MIN_SIZE_BYTES    = 1024   # ignore obvious zero/empty artefacts
 
 
 def _file_is_open(path: Path) -> bool:
-    """Return True if any process currently has this file open."""
+    """Return True if any process currently has this file open.
+
+    Falls back to False (optimistic) when psutil is not installed, relying on
+    the stable-size checks alone to guard against incomplete files.
+    """
+    if not _PSUTIL_AVAILABLE:
+        return False
+
     try:
         for proc in psutil.process_iter(["open_files"]):
             try:

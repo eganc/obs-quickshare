@@ -14,6 +14,8 @@ import stat
 import sys
 from pathlib import Path
 
+from .detect import default_staging_dir
+
 PROFILE_NAME    = "QuickShare"
 COLLECTION_NAME = "QuickShare"
 SHORTCUT_LABEL  = "OBS QuickShare"
@@ -114,8 +116,9 @@ def _write_macos_shortcut(obs_binary: Path | None, force: bool) -> Path:
     #           attributes screen-recording / camera / mic permissions to
     #           OBS.app (bundle ID com.obsproject.obs-studio) rather than
     #           to this shell process.
-    flags_str  = " ".join(f'"{f}"' for f in OBS_FLAGS)
-    obs_qs_bin = _find_obs_quickshare_bin()
+    flags_str   = " ".join(f'"{f}"' for f in OBS_FLAGS)
+    staging_dir = default_staging_dir()
+    obs_qs_bin  = _find_obs_quickshare_bin()
     watcher_line = (
         f'"{obs_qs_bin}" watch &'
         if obs_qs_bin
@@ -153,10 +156,19 @@ echo "  OBS quit. Waiting for file to finish processing…"
 echo "  (You will see a 'Moved:' line when your file is ready.)"
 echo ""
 
-# Give the watcher up to 60 s to detect, stabilise, and move the final file.
-# fragmented_mp4 has no remux step; the file is ready within seconds of OBS
-# quitting, so 60 s is a very safe ceiling.
-sleep 60
+# Wait up to 60 s for the watcher to move any remaining files out of staging.
+# Poll every 2 s and exit early once the staging dir is empty (no .mp4 files).
+ELAPSED=0
+while [ "$ELAPSED" -lt 60 ]; do
+  # Count .mp4 files in the staging directory
+  MP4_COUNT=$(find "{staging_dir}" -maxdepth 1 -name '*.mp4' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$MP4_COUNT" -eq 0 ]; then
+    break
+  fi
+  sleep 2
+  ELAPSED=$((ELAPSED + 2))
+done
+
 kill "$WATCHER_PID" 2>/dev/null
 wait "$WATCHER_PID" 2>/dev/null
 echo "  Done. You can close this window."
